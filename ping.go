@@ -67,8 +67,9 @@ const (
 )
 
 var (
-	ipv4Proto = map[string]string{"ip": "ip4:icmp", "udp": "udp4"}
-	ipv6Proto = map[string]string{"ip": "ip6:ipv6-icmp", "udp": "udp6"}
+	ipv4Proto  = map[string]string{"ip": "ip4:icmp", "udp": "udp4"}
+	ipv6Proto  = map[string]string{"ip": "ip6:ipv6-icmp", "udp": "udp6"}
+	statsMutex = &sync.Mutex{}
 )
 
 // NewPinger returns a new Pinger struct pointer
@@ -357,6 +358,9 @@ func (p *Pinger) finish() {
 // pinger is running or after it is finished. OnFinish calls this function to
 // get it's finished statistics.
 func (p *Pinger) Statistics() *Statistics {
+	statsMutex.Lock()
+	defer statsMutex.Unlock()
+
 	loss := float64(p.PacketsSent-p.PacketsRecv) / float64(p.PacketsSent) * 100
 	var min, max, total time.Duration
 	if len(p.rtts) > 0 {
